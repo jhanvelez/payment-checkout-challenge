@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: checkout-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-checkout_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-checkout_password}
+      POSTGRES_DB: ${DB_NAME:-payment_checkout}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-checkout_user} -d ${DB_NAME:-payment_checkout}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: ./backend
+      target: build
+    container_name: checkout-migrate
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-checkout_user}:${DB_PASSWORD:-checkout_password}@postgres:5432/${DB_NAME:-payment_checkout}?schema=public
+    command: npx prisma migrate deploy
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ./backend
+      target: runtime
+    container_name: checkout-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${DB_USER:-checkout_user}:${DB_PASSWORD:-checkout_password}@postgres:5432/${DB_NAME:-payment_checkout}?schema=public
+      THROTTLE_TTL: ${THROTTLE_TTL:-60000}
+      THROTTLE_LIMIT: ${THROTTLE_LIMIT:-100}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      WOMPI_UAT_URL: ${WOMPI_UAT_URL}
+      WOMPI_SANDBOX_URL: ${WOMPI_SANDBOX_URL}
+      WOMPI_PUBLIC_KEY: ${WOMPI_PUBLIC_KEY}
+      WOMPI_PRIVATE_KEY: ${WOMPI_PRIVATE_KEY}
+      WOMPI_EVENTS_KEY: ${WOMPI_EVENTS_KEY}
+      WOMPI_INTEGRITY_KEY: ${WOMPI_INTEGRITY_KEY}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres-data:
