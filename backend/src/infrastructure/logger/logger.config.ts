@@ -1,4 +1,4 @@
-import { Params } from 'nestjs-pino';
+import type { Params } from 'nestjs-pino';
 
 export const pinoLoggerConfig = (isProduction: boolean): Params => ({
   pinoHttp: {

@@ -1,4 +1,27 @@
-export default () => ({
+export interface AppConfig {
+  env: string;
+  port: number;
+  database: {
+    url: string | undefined;
+  };
+  throttle: {
+    ttl: number;
+    limit: number;
+  };
+  cors: {
+    origin: string;
+  };
+  wompi: {
+    uatUrl: string | undefined;
+    sandboxUrl: string | undefined;
+    publicKey: string | undefined;
+    privateKey: string | undefined;
+    eventsKey: string | undefined;
+    integrityKey: string | undefined;
+  };
+}
+
+export default (): AppConfig => ({
   env: process.env.NODE_ENV ?? 'development',
   port: parseInt(process.env.PORT ?? '3000', 10),
 
