@@ -1,0 +1,108 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+defaults:
+  run:
+    working-directory: backend
+
+env:
+  DATABASE_URL: postgresql://checkout_user:checkout_password@localhost:5432/payment_checkout?schema=public
+  NODE_ENV: test
+  PORT: 3000
+  THROTTLE_TTL: 60000
+  THROTTLE_LIMIT: 100
+  CORS_ORIGIN: '*'
+  WOMPI_UAT_URL: https://api.co.uat.wompi.dev/v1
+  WOMPI_SANDBOX_URL: https://api-sandbox.co.uat.wompi.dev/v1
+  WOMPI_PUBLIC_KEY: ci_placeholder_public_key
+  WOMPI_PRIVATE_KEY: ci_placeholder_private_key
+  WOMPI_EVENTS_KEY: ci_placeholder_events_key
+  WOMPI_INTEGRITY_KEY: ci_placeholder_integrity_key
+
+jobs:
+  lint-test-coverage:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: checkout_user
+          POSTGRES_PASSWORD: checkout_password
+          POSTGRES_DB: payment_checkout
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U checkout_user -d payment_checkout"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Lint
+        run: npx eslint "{src,apps,libs,test}/**/*.ts"
+
+      - name: Build
+        run: npm run build
+
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
+
+      - name: Unit tests with coverage
+        run: npm run test:cov
+
+      - name: E2E tests
+        run: npm run test:e2e
+
+      - name: Publish coverage summary
+        if: always()
+        run: |
+          echo "## Backend coverage" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          tail -n 20 coverage/lcov-report/index.html > /dev/null 2>&1 || true
+          if [ -f coverage/coverage-summary.json ]; then
+            node -e "
+              const s = require('./coverage/coverage-summary.json').total;
+              for (const k of ['lines','statements','functions','branches']) {
+                console.log(k.padEnd(12), s[k].pct + '%');
+              }
+            " >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'coverage-summary.json not found, see the text report above.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage
+          retention-days: 14
