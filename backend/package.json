@@ -84,7 +84,8 @@
       "!main.ts",
       "!**/*.module.ts",
       "!infrastructure/config/**",
-      "!infrastructure/logger/**"
+      "!infrastructure/logger/**",
+      "!infrastructure/persistence/prisma/prisma.service.ts"
     ],
     "coverageDirectory": "../coverage",
     "coverageReporters": [
