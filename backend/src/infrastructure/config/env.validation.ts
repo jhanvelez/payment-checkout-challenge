@@ -17,4 +17,6 @@ export const envValidationSchema = Joi.object({
   WOMPI_PRIVATE_KEY: Joi.string().required(),
   WOMPI_EVENTS_KEY: Joi.string().required(),
   WOMPI_INTEGRITY_KEY: Joi.string().required(),
+  WOMPI_POLL_INTERVAL_MS: Joi.number().default(1500),
+  WOMPI_POLL_MAX_ATTEMPTS: Joi.number().default(10),
 });

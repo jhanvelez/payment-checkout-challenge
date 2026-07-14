@@ -50,6 +50,8 @@ services:
       WOMPI_PRIVATE_KEY: ${WOMPI_PRIVATE_KEY}
       WOMPI_EVENTS_KEY: ${WOMPI_EVENTS_KEY}
       WOMPI_INTEGRITY_KEY: ${WOMPI_INTEGRITY_KEY}
+      WOMPI_POLL_INTERVAL_MS: ${WOMPI_POLL_INTERVAL_MS:-1500}
+      WOMPI_POLL_MAX_ATTEMPTS: ${WOMPI_POLL_MAX_ATTEMPTS:-10}
     depends_on:
       migrate:
         condition: service_completed_successfully
