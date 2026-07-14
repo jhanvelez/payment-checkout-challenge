@@ -27,6 +27,7 @@ enum InventoryMovementType {
 
 model Product {
   id          String   @id @default(uuid())
+  sku         String   @unique
   name        String
   description String
   priceInCents Int

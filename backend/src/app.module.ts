@@ -10,6 +10,7 @@ import { envValidationSchema } from './infrastructure/config/env.validation';
 import { pinoLoggerConfig } from './infrastructure/logger/logger.config';
 import { PrismaModule } from './infrastructure/persistence/prisma/prisma.module';
 import { AllExceptionsFilter } from './presentation/filters/http-exception.filter';
+import { ProductsModule } from './presentation/http/products/products.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AllExceptionsFilter } from './presentation/filters/http-exception.filte
       },
     ]),
     PrismaModule,
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [
