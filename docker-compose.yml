@@ -24,7 +24,7 @@ services:
     container_name: checkout-migrate
     environment:
       DATABASE_URL: postgresql://${DB_USER:-checkout_user}:${DB_PASSWORD:-checkout_password}@postgres:5432/${DB_NAME:-payment_checkout}?schema=public
-    command: npx prisma migrate deploy
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed"
     depends_on:
       postgres:
         condition: service_healthy
