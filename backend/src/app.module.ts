@@ -11,6 +11,7 @@ import { pinoLoggerConfig } from './infrastructure/logger/logger.config';
 import { PrismaModule } from './infrastructure/persistence/prisma/prisma.module';
 import { AllExceptionsFilter } from './presentation/filters/http-exception.filter';
 import { ProductsModule } from './presentation/http/products/products.module';
+import { TransactionsModule } from './presentation/http/transactions/transactions.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ProductsModule } from './presentation/http/products/products.module';
     ]),
     PrismaModule,
     ProductsModule,
+    TransactionsModule,
   ],
   controllers: [AppController],
   providers: [
