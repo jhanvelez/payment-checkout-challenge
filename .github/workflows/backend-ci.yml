@@ -25,10 +25,12 @@ env:
   CORS_ORIGIN: '*'
   WOMPI_UAT_URL: https://api.co.uat.wompi.dev/v1
   WOMPI_SANDBOX_URL: https://api-sandbox.co.uat.wompi.dev/v1
-  WOMPI_PUBLIC_KEY: ci_placeholder_public_key
-  WOMPI_PRIVATE_KEY: ci_placeholder_private_key
-  WOMPI_EVENTS_KEY: ci_placeholder_events_key
-  WOMPI_INTEGRITY_KEY: ci_placeholder_integrity_key
+  WOMPI_PUBLIC_KEY: ${{ secrets.WOMPI_PUBLIC_KEY }}
+  WOMPI_PRIVATE_KEY: ${{ secrets.WOMPI_PRIVATE_KEY }}
+  WOMPI_EVENTS_KEY: ${{ secrets.WOMPI_EVENTS_KEY }}
+  WOMPI_INTEGRITY_KEY: ${{ secrets.WOMPI_INTEGRITY_KEY }}
+  WOMPI_POLL_INTERVAL_MS: 1500
+  WOMPI_POLL_MAX_ATTEMPTS: 10
 
 jobs:
   lint-test-coverage:

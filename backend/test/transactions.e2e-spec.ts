@@ -4,6 +4,7 @@ import type { TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import { configureApp } from '../src/bootstrap';
 import { PrismaService } from '../src/infrastructure/persistence/prisma/prisma.service';
 
 interface TransactionResponseBody {
@@ -27,6 +28,7 @@ describe('Transactions (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    configureApp(app);
     await app.init();
 
     prisma = moduleFixture.get(PrismaService);
@@ -55,7 +57,7 @@ describe('Transactions (e2e)', () => {
 
   it('creates a PENDING transaction with the amount computed from the product price', async () => {
     const response = await request(app.getHttpServer())
-      .post('/transactions')
+      .post('/v1/transactions')
       .send({
         customer: { email: emailCliente, fullName: 'Cliente de Prueba E2E' },
         items: [{ productId: productoId, quantity: 2 }],
@@ -74,7 +76,7 @@ describe('Transactions (e2e)', () => {
 
   it('reuses the customer when the same email orders again', async () => {
     const first = await request(app.getHttpServer())
-      .post('/transactions')
+      .post('/v1/transactions')
       .send({
         customer: { email: emailCliente, fullName: 'Cliente de Prueba E2E' },
         items: [{ productId: productoId, quantity: 1 }],
@@ -90,7 +92,7 @@ describe('Transactions (e2e)', () => {
 
   it('returns 400 when the cart quantity exceeds available stock', () => {
     return request(app.getHttpServer())
-      .post('/transactions')
+      .post('/v1/transactions')
       .send({
         customer: { email: emailCliente, fullName: 'Cliente de Prueba E2E' },
         items: [{ productId: productoId, quantity: 999 }],
@@ -100,7 +102,7 @@ describe('Transactions (e2e)', () => {
 
   it('returns 400 for a malformed request body', () => {
     return request(app.getHttpServer())
-      .post('/transactions')
+      .post('/v1/transactions')
       .send({ customer: { email: 'not-an-email' }, items: [] })
       .expect(400);
   });

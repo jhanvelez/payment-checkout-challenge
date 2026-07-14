@@ -18,6 +18,8 @@ export interface AppConfig {
     privateKey: string | undefined;
     eventsKey: string | undefined;
     integrityKey: string | undefined;
+    pollIntervalMs: number;
+    pollMaxAttempts: number;
   };
 }
 
@@ -45,5 +47,7 @@ export default (): AppConfig => ({
     privateKey: process.env.WOMPI_PRIVATE_KEY,
     eventsKey: process.env.WOMPI_EVENTS_KEY,
     integrityKey: process.env.WOMPI_INTEGRITY_KEY,
+    pollIntervalMs: parseInt(process.env.WOMPI_POLL_INTERVAL_MS ?? '1500', 10),
+    pollMaxAttempts: parseInt(process.env.WOMPI_POLL_MAX_ATTEMPTS ?? '10', 10),
   },
 });
