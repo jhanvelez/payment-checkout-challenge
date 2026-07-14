@@ -1,97 +1,65 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Payment Checkout — Mobile
 
-# Getting Started
+App de checkout en React Native CLI (sin Expo) + TypeScript, con Redux Toolkit y persistencia cifrada.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+> Para el panorama completo del proyecto (arquitectura, backend, decisiones técnicas) ver el [README principal](../README.md).
 
-## Step 1: Start Metro
+## Requisitos
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+- Entorno de React Native configurado: [guía oficial](https://reactnative.dev/docs/set-up-your-environment) (Android Studio + JDK para Android; Xcode + CocoaPods para iOS)
+- El backend corriendo — ver [README principal](../README.md#cómo-correr-el-backend-con-docker)
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## Instalación y arranque
 
-```sh
-# Using npm
+```bash
+npm install
+
+# terminal 1
 npm start
 
-# OR using Yarn
-yarn start
+# terminal 2
+npm run android   # o: npm run ios
 ```
 
-## Step 2: Build and run your app
+## Conexión con el backend
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+La app ya está configurada para no requerir cambios en el caso más común:
 
-### Android
+- **Emulador Android**: usa automáticamente `http://10.0.2.2:3000` (alias del emulador hacia `localhost` del host).
+- **Dispositivo físico / iOS**: edita el host en [`src/services/env.ts`](src/services/env.ts) por la IP de tu máquina en la red local.
 
-```sh
-# Using npm
-npm run android
+**Tarjetas de prueba (Wompi sandbox)**: `4242 4242 4242 4242` (aprobada) · `4111 1111 1111 1111` (rechazada). Cualquier fecha futura, CVC de 3 dígitos.
 
-# OR using Yarn
-yarn android
+## Scripts
+
+| Comando | Descripción |
+|---|---|
+| `npm start` | Servidor Metro |
+| `npm run android` / `npm run ios` | Compila e instala en emulador/dispositivo |
+| `npm run lint` | ESLint |
+| `npm run test` | Tests (Jest + React Native Testing Library) |
+| `npx tsc --noEmit` | Chequeo de tipos |
+
+## Estructura
+
+```
+src/
+├── features/     # Un slice de Redux por dominio: products, cart, checkout, payment, transaction, ui
+├── screens/      # Splash, Home, ProductDetail, Checkout, Processing, Result
+├── components/   # UI kit compartido: Button, Card, TextField, CartSummary, ...
+├── services/     # Cliente axios (backend) + cliente Wompi (tokenización directa desde el dispositivo)
+├── store/        # Store, hooks tipados, storage cifrado (MMKV + Keychain)
+├── navigation/   # React Navigation (native-stack)
+├── theme/        # Design tokens: colores, tipografía, espaciado
+└── utils/        # Validación de tarjeta (Luhn, marca), formato de moneda
 ```
 
-### iOS
+Solo el slice `transaction` se persiste (historial de pagos), cifrado con AES-256 vía MMKV; la llave de cifrado vive en el Keystore/Keychain nativo, nunca en almacenamiento plano. El carrito y el estado de checkout son intencionalmente efímeros.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+## Testing
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+**~93% statements**, 80 tests: reducers, componentes, pantallas, y validaciones (Luhn, detección de marca de tarjeta, schemas de zod).
 
-```sh
-bundle install
+```bash
+npm run test -- --coverage
 ```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.

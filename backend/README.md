@@ -1,98 +1,68 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Payment Checkout — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST en NestJS para el checkout de pago con tarjeta, con arquitectura hexagonal e integración real con Wompi.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+> Para levantar todo el stack (Postgres + backend) con un solo comando vía Docker, ver el [README principal](../README.md#cómo-correr-el-backend-con-docker). Esta guía es para correr el backend directamente con Node, sin Docker.
 
-## Description
+## Requisitos
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- Node.js 22
+- PostgreSQL 16 accesible (por ejemplo, el de `docker compose up postgres` desde la raíz del repo)
 
-## Project setup
+## Instalación y arranque local
 
 ```bash
-$ npm install
+npm install
+cp .env.example .env
+# completa DATABASE_URL (localhost:5433 si usas el Postgres de docker compose)
+# y las llaves WOMPI_* con tus credenciales sandbox
+
+npx prisma migrate deploy
+npx prisma db seed
+
+npm run start:dev
 ```
 
-## Compile and run the project
+La API queda en `http://localhost:3000`, con Swagger en `http://localhost:3000/docs`.
 
-```bash
-# development
-$ npm run start
+## Scripts
 
-# watch mode
-$ npm run start:dev
+| Comando | Descripción |
+|---|---|
+| `npm run start:dev` | Servidor en modo watch |
+| `npm run build` | Compila a `dist/` |
+| `npm run start:prod` | Corre el build compilado |
+| `npm run lint` | ESLint (`--fix`) |
+| `npm run test` | Tests unitarios |
+| `npm run test:cov` | Tests unitarios + reporte de cobertura |
+| `npm run test:e2e` | Tests end-to-end (requiere Postgres accesible) |
 
-# production mode
-$ npm run start:prod
+## Estructura (arquitectura hexagonal)
+
+```
+src/
+├── domain/          # Entidades y contratos (repository ports) — sin dependencias externas
+├── application/     # Casos de uso: create-transaction, process-payment, list-products, ...
+├── infrastructure/  # Adaptadores: repositorios Prisma, cliente Wompi, config, logger
+├── presentation/    # Controllers HTTP, DTOs (Swagger + class-validator), filtro de excepciones
+└── shared/          # Utilidades transversales
 ```
 
-## Run tests
+`presentation` → `application` → `domain` ← `infrastructure`. El dominio y los casos de uso no conocen Prisma ni Wompi directamente, solo las interfaces (`ProductRepository`, `PaymentGatewayPort`, etc.) — ambos son reemplazables sin tocar la lógica de negocio.
 
-```bash
-# unit tests
-$ npm run test
+## Endpoints principales
 
-# e2e tests
-$ npm run test:e2e
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/v1/products` | Catálogo de productos |
+| `GET` | `/v1/products/:id` | Detalle de un producto |
+| `POST` | `/v1/transactions` | Crea una transacción en `PENDING` a partir del carrito |
+| `POST` | `/v1/transactions/:id/payments` | Tokeniza y cobra vía Wompi; actualiza el estado y descuenta stock si fue aprobado |
+| `GET` | `/health` | Health check |
 
-# test coverage
-$ npm run test:cov
-```
+Detalle completo de request/response y códigos de error en Swagger (`/docs`).
 
-## Deployment
+## Testing
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- **~96% statements**, 56 tests unitarios (`npm run test:cov`).
+- 14 tests e2e (`npm run test:e2e`), incluyendo un suite que corre contra el sandbox real de Wompi (no mockeado) — requiere las llaves `WOMPI_*` configuradas en `.env`.
