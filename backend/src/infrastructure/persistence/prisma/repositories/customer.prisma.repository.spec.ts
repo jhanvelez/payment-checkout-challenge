@@ -12,12 +12,34 @@ function construirRegistro(overrides: Partial<Record<string, unknown>> = {}) {
 }
 
 describe('CustomerPrismaRepository', () => {
-  let prisma: { customer: { findFirst: jest.Mock; create: jest.Mock } };
+  let prisma: {
+    customer: { findFirst: jest.Mock; findUnique: jest.Mock; create: jest.Mock };
+  };
   let repository: CustomerPrismaRepository;
 
   beforeEach(() => {
-    prisma = { customer: { findFirst: jest.fn(), create: jest.fn() } };
+    prisma = {
+      customer: { findFirst: jest.fn(), findUnique: jest.fn(), create: jest.fn() },
+    };
     repository = new CustomerPrismaRepository(prisma as never);
+  });
+
+  describe('findById', () => {
+    it('returns null when no customer matches the id', async () => {
+      prisma.customer.findUnique.mockResolvedValue(null);
+
+      const result = await repository.findById('id-inexistente');
+
+      expect(result).toBeNull();
+    });
+
+    it('maps the record to a domain Customer when found', async () => {
+      prisma.customer.findUnique.mockResolvedValue(construirRegistro());
+
+      const result = await repository.findById('cliente-1');
+
+      expect(result?.id).toBe('cliente-1');
+    });
   });
 
   describe('findByEmail', () => {

@@ -11,6 +11,11 @@ import { PrismaService } from '../prisma.service';
 export class CustomerPrismaRepository implements CustomerRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findById(id: string): Promise<Customer | null> {
+    const record = await this.prisma.customer.findUnique({ where: { id } });
+    return record ? CustomerMapper.toDomain(record) : null;
+  }
+
   async findByEmail(email: string): Promise<Customer | null> {
     const record = await this.prisma.customer.findFirst({
       where: { email },

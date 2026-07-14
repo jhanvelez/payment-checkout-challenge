@@ -82,6 +82,7 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s",
       "!main.ts",
+      "!bootstrap.ts",
       "!**/*.module.ts",
       "!infrastructure/config/**",
       "!infrastructure/logger/**",

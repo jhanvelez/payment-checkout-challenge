@@ -15,6 +15,6 @@ import { TransactionsController } from './transactions.controller';
     { provide: CUSTOMER_REPOSITORY, useClass: CustomerPrismaRepository },
     { provide: TRANSACTION_REPOSITORY, useClass: TransactionPrismaRepository },
   ],
-  exports: [TRANSACTION_REPOSITORY],
+  exports: [TRANSACTION_REPOSITORY, CUSTOMER_REPOSITORY],
 })
 export class TransactionsModule {}
