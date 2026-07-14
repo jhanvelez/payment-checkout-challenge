@@ -25,6 +25,7 @@ describe('TransactionPrismaRepository', () => {
     transaction: {
       create: jest.Mock<Promise<ReturnType<typeof construirRegistro>>, [CreateArgs]>;
       findUnique: jest.Mock<Promise<ReturnType<typeof construirRegistro> | null>, [unknown]>;
+      update: jest.Mock<Promise<ReturnType<typeof construirRegistro>>, [unknown]>;
     };
   };
   let repository: TransactionPrismaRepository;
@@ -34,6 +35,7 @@ describe('TransactionPrismaRepository', () => {
       transaction: {
         create: jest.fn<Promise<ReturnType<typeof construirRegistro>>, [CreateArgs]>(),
         findUnique: jest.fn<Promise<ReturnType<typeof construirRegistro> | null>, [unknown]>(),
+        update: jest.fn<Promise<ReturnType<typeof construirRegistro>>, [unknown]>(),
       },
     };
     repository = new TransactionPrismaRepository(prisma as never);
@@ -79,6 +81,24 @@ describe('TransactionPrismaRepository', () => {
       const result = await repository.findByReference('TX-EXAMPLE-001');
 
       expect(result?.status).toBe('PENDING');
+    });
+  });
+
+  describe('updateStatus', () => {
+    it('updates the status and gateway id and maps the result', async () => {
+      prisma.transaction.update.mockResolvedValue(
+        construirRegistro({ status: 'APPROVED', wompiTransactionId: 'wompi-tx-1' }),
+      );
+
+      const result = await repository.updateStatus('transaccion-1', 'APPROVED', 'wompi-tx-1');
+
+      expect(prisma.transaction.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'transaccion-1' },
+          data: { status: 'APPROVED', wompiTransactionId: 'wompi-tx-1' },
+        }),
+      );
+      expect(result.status).toBe('APPROVED');
     });
   });
 });

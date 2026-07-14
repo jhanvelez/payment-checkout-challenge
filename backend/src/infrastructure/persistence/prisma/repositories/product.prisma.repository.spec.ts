@@ -21,31 +21,38 @@ function construirRegistro(overrides: Partial<Record<string, unknown>> = {}) {
 }
 
 describe('ProductPrismaRepository', () => {
-  let prisma: {
+  let tx: {
     product: {
       findMany: jest.Mock;
       findUnique: jest.Mock;
       findUniqueOrThrow: jest.Mock;
       updateMany: jest.Mock;
     };
+    inventoryMovement: { create: jest.Mock };
   };
+  let prisma: { $transaction: jest.Mock } & typeof tx;
   let repository: ProductPrismaRepository;
 
   beforeEach(() => {
-    prisma = {
+    tx = {
       product: {
         findMany: jest.fn(),
         findUnique: jest.fn(),
         findUniqueOrThrow: jest.fn(),
         updateMany: jest.fn(),
       },
+      inventoryMovement: { create: jest.fn() },
+    };
+    prisma = {
+      ...tx,
+      $transaction: jest.fn((callback: (client: typeof tx) => unknown) => callback(tx)),
     };
     repository = new ProductPrismaRepository(prisma as never);
   });
 
   describe('findAll', () => {
     it('maps every record to a domain Product', async () => {
-      prisma.product.findMany.mockResolvedValue([
+      tx.product.findMany.mockResolvedValue([
         construirRegistro({ id: 'producto-1' }),
         construirRegistro({ id: 'producto-2', sku: 'HUB-USBC-7EN1' }),
       ]);
@@ -59,7 +66,7 @@ describe('ProductPrismaRepository', () => {
 
   describe('findById', () => {
     it('returns null when the record does not exist', async () => {
-      prisma.product.findUnique.mockResolvedValue(null);
+      tx.product.findUnique.mockResolvedValue(null);
 
       const result = await repository.findById('id-inexistente');
 
@@ -67,7 +74,7 @@ describe('ProductPrismaRepository', () => {
     });
 
     it('maps the record to a domain Product when found', async () => {
-      prisma.product.findUnique.mockResolvedValue(construirRegistro());
+      tx.product.findUnique.mockResolvedValue(construirRegistro());
 
       const result = await repository.findById('producto-1');
 
@@ -76,33 +83,42 @@ describe('ProductPrismaRepository', () => {
   });
 
   describe('decreaseStock', () => {
-    it('decrements stock and returns the updated product on success', async () => {
-      prisma.product.updateMany.mockResolvedValue({ count: 1 });
-      prisma.product.findUniqueOrThrow.mockResolvedValue(construirRegistro({ stock: 45 }));
+    it('decrements stock, records the inventory movement and returns the updated product', async () => {
+      tx.product.updateMany.mockResolvedValue({ count: 1 });
+      tx.product.findUniqueOrThrow.mockResolvedValue(construirRegistro({ stock: 45 }));
 
-      const result = await repository.decreaseStock('producto-1', 2);
+      const result = await repository.decreaseStock('producto-1', 2, 'transaccion-1');
 
-      expect(prisma.product.updateMany).toHaveBeenCalledWith({
+      expect(tx.product.updateMany).toHaveBeenCalledWith({
         where: { id: 'producto-1', stock: { gte: 2 } },
         data: { stock: { decrement: 2 } },
+      });
+      expect(tx.inventoryMovement.create).toHaveBeenCalledWith({
+        data: {
+          productId: 'producto-1',
+          transactionId: 'transaccion-1',
+          quantity: 2,
+          type: 'DECREASED',
+        },
       });
       expect(result.stock).toBe(45);
     });
 
-    it('throws InsufficientStockError when stock is too low', async () => {
-      prisma.product.updateMany.mockResolvedValue({ count: 0 });
-      prisma.product.findUnique.mockResolvedValue(construirRegistro({ stock: 1 }));
+    it('throws InsufficientStockError when stock is too low, without recording a movement', async () => {
+      tx.product.updateMany.mockResolvedValue({ count: 0 });
+      tx.product.findUnique.mockResolvedValue(construirRegistro({ stock: 1 }));
 
-      await expect(repository.decreaseStock('producto-1', 5)).rejects.toThrow(
+      await expect(repository.decreaseStock('producto-1', 5, 'transaccion-1')).rejects.toThrow(
         InsufficientStockError,
       );
+      expect(tx.inventoryMovement.create).not.toHaveBeenCalled();
     });
 
     it('throws ProductNotFoundError when the product does not exist', async () => {
-      prisma.product.updateMany.mockResolvedValue({ count: 0 });
-      prisma.product.findUnique.mockResolvedValue(null);
+      tx.product.updateMany.mockResolvedValue({ count: 0 });
+      tx.product.findUnique.mockResolvedValue(null);
 
-      await expect(repository.decreaseStock('id-inexistente', 1)).rejects.toThrow(
+      await expect(repository.decreaseStock('id-inexistente', 1, 'transaccion-1')).rejects.toThrow(
         ProductNotFoundError,
       );
     });

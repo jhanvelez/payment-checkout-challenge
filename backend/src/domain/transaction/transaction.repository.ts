@@ -16,4 +16,9 @@ export interface TransactionRepository {
   create(data: CreateTransactionData): Promise<Transaction>;
   findById(id: string): Promise<Transaction | null>;
   findByReference(reference: string): Promise<Transaction | null>;
+  updateStatus(
+    id: string,
+    status: TransactionStatus,
+    wompiTransactionId: string | null,
+  ): Promise<Transaction>;
 }
