@@ -2,7 +2,7 @@ import type { ArgumentsHost } from '@nestjs/common';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { AllExceptionsFilter } from './http-exception.filter';
 
-function buildHost(url = '/products/123'): {
+function construirHost(url = '/products/123'): {
   host: ArgumentsHost;
   json: jest.Mock;
   status: jest.Mock;
@@ -27,15 +27,15 @@ describe('AllExceptionsFilter', () => {
   });
 
   it('maps a NotFoundException to a 404 body with its message', () => {
-    const { host, json, status } = buildHost();
+    const { host, json, status } = construirHost();
 
-    filter.catch(new NotFoundException('Product not found'), host);
+    filter.catch(new NotFoundException('Producto no encontrado'), host);
 
     expect(status).toHaveBeenCalledWith(404);
     expect(json).toHaveBeenCalledWith(
       expect.objectContaining({
         statusCode: 404,
-        message: 'Product not found',
+        message: 'Producto no encontrado',
         error: 'NotFoundException',
         path: '/products/123',
       }),
@@ -43,24 +43,28 @@ describe('AllExceptionsFilter', () => {
   });
 
   it('maps a BadRequestException with array validation messages', () => {
-    const { host, json, status } = buildHost();
+    const { host, json, status } = construirHost();
 
-    filter.catch(new BadRequestException(['name should not be empty']), host);
+    filter.catch(new BadRequestException(['el nombre no puede estar vacío']), host);
 
     expect(status).toHaveBeenCalledWith(400);
     expect(json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: ['name should not be empty'] }),
+      expect.objectContaining({ message: ['el nombre no puede estar vacío'] }),
     );
   });
 
   it('maps an unknown thrown error to a 500 with a generic body', () => {
-    const { host, json, status } = buildHost();
+    const { host, json, status } = construirHost();
 
-    filter.catch(new Error('boom'), host);
+    filter.catch(new Error('fallo inesperado'), host);
 
     expect(status).toHaveBeenCalledWith(500);
     expect(json).toHaveBeenCalledWith(
-      expect.objectContaining({ statusCode: 500, message: 'boom', error: 'InternalServerError' }),
+      expect.objectContaining({
+        statusCode: 500,
+        message: 'fallo inesperado',
+        error: 'InternalServerError',
+      }),
     );
   });
 });
