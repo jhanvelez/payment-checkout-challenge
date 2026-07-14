@@ -2,15 +2,15 @@ import { Product } from '../../../domain/product/product.entity';
 import type { ProductRepository } from '../../../domain/product/product.repository';
 import { ListProductsUseCase } from './list-products.use-case';
 
-function buildProduct(overrides: Partial<Record<string, unknown>> = {}): Product {
+function construirProducto(overrides: Partial<Record<string, unknown>> = {}): Product {
   return new Product({
-    id: 'product-1',
-    sku: 'SKU-1',
-    name: 'Test product',
-    description: 'A product used for testing',
-    priceInCents: 10000,
+    id: 'producto-1',
+    sku: 'AUD-ANC-100',
+    name: 'Audífonos inalámbricos con cancelación de ruido',
+    description: 'Producto de ejemplo usado en las pruebas automatizadas',
+    priceInCents: 18790000,
     currency: 'COP',
-    stock: 5,
+    stock: 34,
     imageUrl: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -32,12 +32,15 @@ describe('ListProductsUseCase', () => {
   });
 
   it('returns all products from the repository', async () => {
-    const products = [buildProduct({ id: 'p1' }), buildProduct({ id: 'p2' })];
-    repository.findAll.mockResolvedValue(products);
+    const productos = [
+      construirProducto({ id: 'producto-1', sku: 'AUD-ANC-100' }),
+      construirProducto({ id: 'producto-2', sku: 'TEC-MEC-87' }),
+    ];
+    repository.findAll.mockResolvedValue(productos);
 
     const result = await useCase.execute();
 
-    expect(result).toBe(products);
+    expect(result).toBe(productos);
     expect(repository.findAll).toHaveBeenCalledTimes(1);
   });
 
