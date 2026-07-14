@@ -3,15 +3,15 @@ import { ProductNotFoundError } from '../../../domain/product/product.errors';
 import type { ProductRepository } from '../../../domain/product/product.repository';
 import { GetProductByIdUseCase } from './get-product-by-id.use-case';
 
-function buildProduct(): Product {
+function construirProducto(): Product {
   return new Product({
-    id: 'product-1',
-    sku: 'SKU-1',
-    name: 'Test product',
-    description: 'A product used for testing',
-    priceInCents: 10000,
+    id: 'producto-1',
+    sku: 'RELOJ-SPORT-2',
+    name: 'Reloj inteligente deportivo',
+    description: 'Producto de ejemplo usado en las pruebas automatizadas',
+    priceInCents: 45900000,
     currency: 'COP',
-    stock: 5,
+    stock: 9,
     imageUrl: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -32,18 +32,18 @@ describe('GetProductByIdUseCase', () => {
   });
 
   it('returns the product when it exists', async () => {
-    const product = buildProduct();
-    repository.findById.mockResolvedValue(product);
+    const producto = construirProducto();
+    repository.findById.mockResolvedValue(producto);
 
-    const result = await useCase.execute('product-1');
+    const result = await useCase.execute('producto-1');
 
-    expect(result).toBe(product);
-    expect(repository.findById).toHaveBeenCalledWith('product-1');
+    expect(result).toBe(producto);
+    expect(repository.findById).toHaveBeenCalledWith('producto-1');
   });
 
   it('throws ProductNotFoundError when the product does not exist', async () => {
     repository.findById.mockResolvedValue(null);
 
-    await expect(useCase.execute('missing-id')).rejects.toThrow(ProductNotFoundError);
+    await expect(useCase.execute('id-inexistente')).rejects.toThrow(ProductNotFoundError);
   });
 });

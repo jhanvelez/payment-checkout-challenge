@@ -9,7 +9,7 @@ import { PrismaService } from '../src/infrastructure/persistence/prisma/prisma.s
 describe('Products (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
-  const seededSku = 'SKU-E2E-TEST-PRODUCT';
+  const seededSku = 'PRUEBA-E2E-001';
   let seededProductId: string;
 
   beforeAll(async () => {
@@ -24,8 +24,8 @@ describe('Products (e2e)', () => {
     const created = await prisma.product.create({
       data: {
         sku: seededSku,
-        name: 'E2E Test Product',
-        description: 'Product created for the products e2e suite',
+        name: 'Producto de prueba E2E',
+        description: 'Producto creado para la suite de pruebas end-to-end de productos',
         priceInCents: 1000000,
         currency: 'COP',
         stock: 10,
