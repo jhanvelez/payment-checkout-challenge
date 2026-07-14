@@ -3,7 +3,10 @@ import type {
   CreateTransactionData,
   TransactionRepository,
 } from '../../../../domain/transaction/transaction.repository';
-import type { Transaction } from '../../../../domain/transaction/transaction.entity';
+import type {
+  Transaction,
+  TransactionStatus,
+} from '../../../../domain/transaction/transaction.entity';
 import { TransactionMapper } from '../mappers/transaction.mapper';
 import { PrismaService } from '../prisma.service';
 
@@ -48,5 +51,18 @@ export class TransactionPrismaRepository implements TransactionRepository {
       include: WITH_ITEMS,
     });
     return record ? TransactionMapper.toDomain(record) : null;
+  }
+
+  async updateStatus(
+    id: string,
+    status: TransactionStatus,
+    wompiTransactionId: string | null,
+  ): Promise<Transaction> {
+    const record = await this.prisma.transaction.update({
+      where: { id },
+      data: { status, wompiTransactionId },
+      include: WITH_ITEMS,
+    });
+    return TransactionMapper.toDomain(record);
   }
 }

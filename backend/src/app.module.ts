@@ -12,6 +12,7 @@ import { PrismaModule } from './infrastructure/persistence/prisma/prisma.module'
 import { AllExceptionsFilter } from './presentation/filters/http-exception.filter';
 import { ProductsModule } from './presentation/http/products/products.module';
 import { TransactionsModule } from './presentation/http/transactions/transactions.module';
+import { PaymentsModule } from './presentation/http/payments/payments.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { TransactionsModule } from './presentation/http/transactions/transaction
     PrismaModule,
     ProductsModule,
     TransactionsModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [
