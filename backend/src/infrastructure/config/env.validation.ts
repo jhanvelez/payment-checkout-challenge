@@ -1,0 +1,22 @@
+import * as Joi from 'joi';
+
+export const envValidationSchema = Joi.object({
+  NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
+  PORT: Joi.number().default(3000),
+
+  DATABASE_URL: Joi.string().uri().required(),
+
+  THROTTLE_TTL: Joi.number().default(60000),
+  THROTTLE_LIMIT: Joi.number().default(100),
+
+  CORS_ORIGIN: Joi.string().default('*'),
+
+  WOMPI_UAT_URL: Joi.string().uri().required(),
+  WOMPI_SANDBOX_URL: Joi.string().uri().required(),
+  WOMPI_PUBLIC_KEY: Joi.string().required(),
+  WOMPI_PRIVATE_KEY: Joi.string().required(),
+  WOMPI_EVENTS_KEY: Joi.string().required(),
+  WOMPI_INTEGRITY_KEY: Joi.string().required(),
+  WOMPI_POLL_INTERVAL_MS: Joi.number().default(1500),
+  WOMPI_POLL_MAX_ATTEMPTS: Joi.number().default(10),
+});

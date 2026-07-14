@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  ERROR
+}
+
+enum CardBrand {
+  VISA
+  MASTERCARD
+  UNKNOWN
+}
+
+enum InventoryMovementType {
+  RESERVED
+  DECREASED
+  RELEASED
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  sku         String   @unique
+  name        String
+  description String
+  priceInCents Int
+  currency    String   @default("COP")
+  stock       Int      @default(0)
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  transactionItems   TransactionItem[]
+  inventoryMovements InventoryMovement[]
+
+  @@map("products")
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  email     String
+  fullName  String
+  phone     String?
+  createdAt DateTime @default(now())
+
+  transactions Transaction[]
+
+  @@map("customers")
+}
+
+model Transaction {
+  id                String            @id @default(uuid())
+  reference         String            @unique
+  status            TransactionStatus @default(PENDING)
+  amountInCents     Int
+  currency          String            @default("COP")
+  customerId        String
+  customer          Customer          @relation(fields: [customerId], references: [id])
+  wompiTransactionId String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  items              TransactionItem[]
+  payment            Payment?
+  inventoryMovements InventoryMovement[]
+
+  @@map("transactions")
+}
+
+model TransactionItem {
+  id            String @id @default(uuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  productId     String
+  product       Product     @relation(fields: [productId], references: [id])
+  quantity      Int
+  unitPriceInCents Int
+
+  @@map("transaction_items")
+}
+
+model Payment {
+  id                 String   @id @default(uuid())
+  transactionId      String   @unique
+  transaction        Transaction @relation(fields: [transactionId], references: [id])
+  wompiTransactionId String?
+  status             TransactionStatus
+  paymentMethodType  String?
+  cardBrand          CardBrand?
+  lastFour           String?
+  rawResponse        Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("payments")
+}
+
+model InventoryMovement {
+  id            String                @id @default(uuid())
+  productId     String
+  product       Product               @relation(fields: [productId], references: [id])
+  transactionId String?
+  transaction   Transaction?          @relation(fields: [transactionId], references: [id])
+  type          InventoryMovementType
+  quantity      Int
+  createdAt     DateTime              @default(now())
+
+  @@map("inventory_movements")
+}

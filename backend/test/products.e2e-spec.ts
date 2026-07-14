@@ -1,0 +1,70 @@
+import type { INestApplication } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import request from 'supertest';
+import type { App } from 'supertest/types';
+import { AppModule } from '../src/app.module';
+import { configureApp } from '../src/bootstrap';
+import { PrismaService } from '../src/infrastructure/persistence/prisma/prisma.service';
+
+describe('Products (e2e)', () => {
+  let app: INestApplication<App>;
+  let prisma: PrismaService;
+  const seededSku = 'PRUEBA-E2E-001';
+  let seededProductId: string;
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    configureApp(app);
+    await app.init();
+
+    prisma = moduleFixture.get(PrismaService);
+    const created = await prisma.product.create({
+      data: {
+        sku: seededSku,
+        name: 'Producto de prueba E2E',
+        description: 'Producto creado para la suite de pruebas end-to-end de productos',
+        priceInCents: 1000000,
+        currency: 'COP',
+        stock: 10,
+      },
+    });
+    seededProductId = created.id;
+  });
+
+  afterAll(async () => {
+    await prisma.product.delete({ where: { id: seededProductId } }).catch(() => undefined);
+    await app.close();
+  });
+
+  it('GET /v1/products returns the seeded product', () => {
+    return request(app.getHttpServer())
+      .get('/v1/products')
+      .expect(200)
+      .expect((res: { body: Array<{ sku: string }> }) => {
+        expect(res.body.some((product) => product.sku === seededSku)).toBe(true);
+      });
+  });
+
+  it('GET /v1/products/:id returns the product when it exists', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/v1/products/${seededProductId}`)
+      .expect(200);
+
+    expect(response.body).toMatchObject({ id: seededProductId, sku: seededSku });
+  });
+
+  it('GET /v1/products/:id returns 404 for a well-formed but unknown id', () => {
+    return request(app.getHttpServer())
+      .get('/v1/products/00000000-0000-4000-8000-000000000000')
+      .expect(404);
+  });
+
+  it('GET /v1/products/:id returns 400 for a malformed id', () => {
+    return request(app.getHttpServer()).get('/v1/products/not-a-uuid').expect(400);
+  });
+});
