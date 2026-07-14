@@ -31,7 +31,7 @@ export class TransactionResponseDto {
   @ApiProperty({ type: [TransactionItemResponseDto] })
   items: TransactionItemResponseDto[];
 
-  @ApiProperty()
+  @ApiProperty({ type: String, format: 'date-time', example: '2024-01-01T00:00:00.000Z' })
   createdAt: Date;
 
   static fromDomain(transaction: Transaction): TransactionResponseDto {
