@@ -4,6 +4,7 @@ import type { TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import { configureApp } from '../src/bootstrap';
 import { PrismaService } from '../src/infrastructure/persistence/prisma/prisma.service';
 
 describe('Products (e2e)', () => {
@@ -18,6 +19,7 @@ describe('Products (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    configureApp(app);
     await app.init();
 
     prisma = moduleFixture.get(PrismaService);
@@ -39,30 +41,30 @@ describe('Products (e2e)', () => {
     await app.close();
   });
 
-  it('GET /products returns the seeded product', () => {
+  it('GET /v1/products returns the seeded product', () => {
     return request(app.getHttpServer())
-      .get('/products')
+      .get('/v1/products')
       .expect(200)
       .expect((res: { body: Array<{ sku: string }> }) => {
         expect(res.body.some((product) => product.sku === seededSku)).toBe(true);
       });
   });
 
-  it('GET /products/:id returns the product when it exists', async () => {
+  it('GET /v1/products/:id returns the product when it exists', async () => {
     const response = await request(app.getHttpServer())
-      .get(`/products/${seededProductId}`)
+      .get(`/v1/products/${seededProductId}`)
       .expect(200);
 
     expect(response.body).toMatchObject({ id: seededProductId, sku: seededSku });
   });
 
-  it('GET /products/:id returns 404 for a well-formed but unknown id', () => {
+  it('GET /v1/products/:id returns 404 for a well-formed but unknown id', () => {
     return request(app.getHttpServer())
-      .get('/products/00000000-0000-4000-8000-000000000000')
+      .get('/v1/products/00000000-0000-4000-8000-000000000000')
       .expect(404);
   });
 
-  it('GET /products/:id returns 400 for a malformed id', () => {
-    return request(app.getHttpServer()).get('/products/not-a-uuid').expect(400);
+  it('GET /v1/products/:id returns 400 for a malformed id', () => {
+    return request(app.getHttpServer()).get('/v1/products/not-a-uuid').expect(400);
   });
 });
