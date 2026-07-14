@@ -10,7 +10,15 @@ import {
   ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ProcessPaymentUseCase } from '../../../application/checkout/use-cases/process-payment.use-case';
 import {
   PaymentGatewayError,
@@ -27,7 +35,12 @@ export class PaymentsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Tokenize-and-charge a PENDING transaction through Wompi' })
+  @ApiParam({ name: 'transactionId', format: 'uuid' })
   @ApiCreatedResponse({ type: PaymentResultResponseDto })
+  @ApiNotFoundResponse({ description: 'Transaction does not exist' })
+  @ApiConflictResponse({ description: 'Transaction is not in PENDING status (already processed)' })
+  @ApiResponse({ status: 502, description: 'Wompi request failed' })
   async create(
     @Param('transactionId', ParseUUIDPipe) transactionId: string,
     @Body() dto: ProcessPaymentDto,

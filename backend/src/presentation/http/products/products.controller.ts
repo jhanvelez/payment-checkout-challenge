@@ -1,5 +1,11 @@
 import { Controller, Get, NotFoundException, Param, ParseUUIDPipe } from '@nestjs/common';
-import { ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { GetProductByIdUseCase } from '../../../application/product/use-cases/get-product-by-id.use-case';
 import { ListProductsUseCase } from '../../../application/product/use-cases/list-products.use-case';
 import { ProductNotFoundError } from '../../../domain/product/product.errors';
@@ -14,6 +20,7 @@ export class ProductsController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'List the product catalog' })
   @ApiOkResponse({ type: ProductResponseDto, isArray: true })
   async list(): Promise<ProductResponseDto[]> {
     const products = await this.listProductsUseCase.execute();
@@ -21,8 +28,10 @@ export class ProductsController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get a single product by id' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: ProductResponseDto })
+  @ApiNotFoundResponse({ description: 'Product does not exist' })
   async getById(@Param('id', ParseUUIDPipe) id: string): Promise<ProductResponseDto> {
     try {
       const product = await this.getProductByIdUseCase.execute(id);
