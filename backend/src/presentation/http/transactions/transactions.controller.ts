@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateTransactionUseCase } from '../../../application/checkout/use-cases/create-transaction.use-case';
 import {
   InsufficientStockError,
@@ -16,7 +16,11 @@ export class TransactionsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a PENDING transaction from the cart items' })
   @ApiCreatedResponse({ type: TransactionResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Empty cart, unknown product, or insufficient stock for one of the items',
+  })
   async create(@Body() dto: CreateTransactionDto): Promise<TransactionResponseDto> {
     try {
       const transaction = await this.createTransactionUseCase.execute({
